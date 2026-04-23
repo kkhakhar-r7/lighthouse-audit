@@ -2,3 +2,5 @@ node_modules
 lighthouse-results.json
 lighthouse-videos
 lighthouse-screenshots
+.DS_Store
+*.log
