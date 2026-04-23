@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lighthouse Trends</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent1: #22c55e;
+      --accent2: #38bdf8;
+      --accent3: #f59e0b;
+    }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, -apple-system, Segoe UI, Helvetica, Arial, sans-serif;
+      background: radial-gradient(circle at top, #1f2937, var(--bg));
+      color: var(--text);
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .card {
+      background: color-mix(in srgb, var(--panel) 88%, black);
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    h1 { margin: 0 0 8px; font-size: 1.6rem; }
+    p { color: var(--muted); margin-top: 0; }
+    .summary { display: flex; gap: 16px; flex-wrap: wrap; }
+    .chip { background: #0b1220; border: 1px solid #334155; border-radius: 999px; padding: 8px 12px; }
+    canvas { width: 100% !important; height: 420px !important; }
+    .controls { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+    select {
+      background: #0b1220;
+      border: 1px solid #334155;
+      color: #e5e7eb;
+      border-radius: 8px;
+      padding: 6px 10px;
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border-bottom: 1px solid #334155; padding: 8px; text-align: left; }
+    th { color: var(--muted); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Lighthouse Performance Trends</h1>
+      <p>Trend view generated from per-page metric files in lighthouse-metrics.</p>
+      <div class="summary" id="summary"></div>
+    </div>
+    <div class="card">
+      <canvas id="perfChart"></canvas>
+    </div>
+    <div class="card">
+      <div class="controls">
+        <label for="vitalMetric">Web Vital</label>
+        <select id="vitalMetric">
+          <option value="FCP">FCP (ms)</option>
+          <option value="LCP">LCP (ms)</option>
+          <option value="TBT">TBT (ms)</option>
+          <option value="CLS">CLS</option>
+          <option value="SI">SI (ms)</option>
+        </select>
+      </div>
+      <canvas id="vitalsChart"></canvas>
+    </div>
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Page</th>
+            <th>Latest Score</th>
+            <th>Previous Score</th>
+            <th>Delta</th>
+            <th>Samples</th>
+          </tr>
+        </thead>
+        <tbody id="trendRows"></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Page</th>
+            <th>FCP</th>
+            <th>LCP</th>
+            <th>TBT</th>
+            <th>CLS</th>
+            <th>SI</th>
+          </tr>
+        </thead>
+        <tbody id="vitalsRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const series = [{"label":"/asset/index.jsp","fileName":"lighthouse-metrics-asset-index-jsp.json","points":[{"timestamp":"2026-04-23T13:40:14.356Z","performance":1,"FCP":22176,"LCP":26076,"TBT":4588,"CLS":0.8951,"SI":22176},{"timestamp":"2026-04-23T13:51:07.277Z","performance":1,"FCP":22136,"LCP":23480,"TBT":4570,"CLS":0.8951,"SI":22136}]},{"label":"/home.jsp","fileName":"lighthouse-metrics-home-jsp.json","points":[{"timestamp":"2026-04-23T13:37:48.071Z","performance":16,"FCP":35073,"LCP":37550,"TBT":998,"CLS":0.3522,"SI":54517},{"timestamp":"2026-04-23T13:39:47.195Z","performance":16,"FCP":35247,"LCP":41731,"TBT":952,"CLS":0.3522,"SI":35247},{"timestamp":"2026-04-23T13:50:41.261Z","performance":16,"FCP":35263,"LCP":37324,"TBT":1029,"CLS":0.3522,"SI":35263}]}];
+    const allTimestamps = Array.from(new Set(series.flatMap((s) => s.points.map((p) => p.timestamp)))).sort();
+    const labels = allTimestamps.map((ts) => {
+      const d = new Date(ts);
+      return d.toLocaleString();
+    });
+
+    const palette = ['#22c55e', '#38bdf8', '#f59e0b', '#a78bfa', '#ef4444'];
+    const makeDatasets = (metricKey) =>
+      series.map((s, idx) => {
+        const pointMap = new Map(s.points.map((p) => [p.timestamp, p[metricKey]]));
+        return {
+          label: s.label,
+          data: allTimestamps.map((ts) => pointMap.has(ts) ? pointMap.get(ts) : null),
+          borderColor: palette[idx % palette.length],
+          backgroundColor: palette[idx % palette.length],
+          pointRadius: 3,
+          spanGaps: true,
+          tension: 0.3,
+        };
+      });
+
+    const chartCtx = document.getElementById('perfChart').getContext('2d');
+    new Chart(chartCtx, {
+      type: 'line',
+      data: { labels, datasets: makeDatasets('performance') },
+      options: {
+        plugins: {
+          legend: { labels: { color: '#e5e7eb' } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => String(ctx.dataset.label) + ': ' + (ctx.raw ?? 'n/a'),
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: { color: '#94a3b8' },
+            grid: { color: '#1f2937' },
+          },
+          y: {
+            min: 0,
+            max: 100,
+            ticks: { color: '#94a3b8' },
+            grid: { color: '#1f2937' },
+            title: { display: true, text: 'Performance Score', color: '#94a3b8' },
+          },
+        },
+      },
+    });
+
+    const vitalMetricSelector = document.getElementById('vitalMetric');
+    const vitalsCtx = document.getElementById('vitalsChart').getContext('2d');
+    const vitalMetricLabel = (key) => ({ FCP: 'FCP (ms)', LCP: 'LCP (ms)', TBT: 'TBT (ms)', CLS: 'CLS', SI: 'SI (ms)' }[key] || key);
+
+    const vitalsChart = new Chart(vitalsCtx, {
+      type: 'line',
+      data: { labels, datasets: makeDatasets('FCP') },
+      options: {
+        plugins: {
+          legend: { labels: { color: '#e5e7eb' } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => String(ctx.dataset.label) + ': ' + (ctx.raw ?? 'n/a'),
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: { color: '#94a3b8' },
+            grid: { color: '#1f2937' },
+          },
+          y: {
+            ticks: { color: '#94a3b8' },
+            grid: { color: '#1f2937' },
+            title: { display: true, text: vitalMetricLabel('FCP'), color: '#94a3b8' },
+          },
+        },
+      },
+    });
+
+    vitalMetricSelector.addEventListener('change', () => {
+      const selectedMetric = vitalMetricSelector.value;
+      vitalsChart.data.datasets = makeDatasets(selectedMetric);
+      vitalsChart.options.scales.y.title.text = vitalMetricLabel(selectedMetric);
+      vitalsChart.update();
+    });
+
+    const rows = document.getElementById('trendRows');
+    const summary = document.getElementById('summary');
+    const vitalsRows = document.getElementById('vitalsRows');
+
+    const formatMs = (val) => {
+      if (typeof val !== 'number') return 'n/a';
+      return (val / 1000).toFixed(2) + 's';
+    };
+    const formatCLS = (val) => (typeof val === 'number' ? val.toFixed(3) : 'n/a');
+
+    series.forEach((s) => {
+      const numeric = s.points.filter((p) => typeof p.performance === 'number');
+      const latest = numeric.at(-1)?.performance;
+      const prev = numeric.at(-2)?.performance;
+      const delta = (typeof latest === 'number' && typeof prev === 'number') ? latest - prev : null;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + s.label + '</td>' +
+        '<td>' + (latest ?? 'n/a') + '</td>' +
+        '<td>' + (prev ?? 'n/a') + '</td>' +
+        '<td>' + (delta === null ? 'n/a' : (delta > 0 ? '+' + delta : String(delta))) + '</td>' +
+        '<td>' + numeric.length + '</td>';
+      rows.appendChild(tr);
+
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.textContent = s.label + ': ' + (latest ?? 'n/a') + ' (' + numeric.length + ' runs)';
+      summary.appendChild(chip);
+
+      const latestPoint = s.points.at(-1) || {};
+      const vitalsTr = document.createElement('tr');
+      vitalsTr.innerHTML =
+        '<td>' + s.label + '</td>' +
+        '<td>' + formatMs(latestPoint.FCP) + '</td>' +
+        '<td>' + formatMs(latestPoint.LCP) + '</td>' +
+        '<td>' + formatMs(latestPoint.TBT) + '</td>' +
+        '<td>' + formatCLS(latestPoint.CLS) + '</td>' +
+        '<td>' + formatMs(latestPoint.SI) + '</td>';
+      vitalsRows.appendChild(vitalsTr);
+    });
+  </script>
+</body>
+</html>

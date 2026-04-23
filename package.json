@@ -1,0 +1,21 @@
+{
+  "name": "lighthouse-audit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Standalone Lighthouse performance audit tool for Nexpose Scan Manager UI",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "audit": "node scripts/lighthouse-audit.mjs",
+    "lighthouse": "node scripts/lighthouse-audit.mjs",
+    "trends": "node scripts/performance-trends.mjs"
+  },
+  "dependencies": {
+    "chrome-launcher": "^1.1.0",
+    "ffmpeg-static": "^5.2.0",
+    "lighthouse": "^12.0.0",
+    "puppeteer-core": "^22.0.0"
+  }
+}

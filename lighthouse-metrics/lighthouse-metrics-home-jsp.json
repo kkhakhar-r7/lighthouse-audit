@@ -1,0 +1,65 @@
+[
+  {
+    "timestamp": "2026-04-23T13:37:48.071Z",
+    "url": "https://odin.vuln.lax.rapid7.com:3780/home.jsp",
+    "path": "/home.jsp",
+    "authenticated": true,
+    "scores": {
+      "performance": 16
+    },
+    "metrics": {
+      "FCP": 35073,
+      "LCP": 37550,
+      "TBT": 998,
+      "CLS": 0.3522,
+      "SI": 54517
+    },
+    "bundles": {
+      "totalTransferSize": 5153303,
+      "unusedJS": 1587063,
+      "unusedCSS": 290483
+    }
+  },
+  {
+    "timestamp": "2026-04-23T13:39:47.195Z",
+    "url": "https://odin.vuln.lax.rapid7.com:3780/home.jsp",
+    "path": "/home.jsp",
+    "authenticated": true,
+    "scores": {
+      "performance": 16
+    },
+    "metrics": {
+      "FCP": 35247,
+      "LCP": 41731,
+      "TBT": 952,
+      "CLS": 0.3522,
+      "SI": 35247
+    },
+    "bundles": {
+      "totalTransferSize": 5151114,
+      "unusedJS": 1587126,
+      "unusedCSS": 290483
+    }
+  },
+  {
+    "timestamp": "2026-04-23T13:50:41.261Z",
+    "url": "https://odin.vuln.lax.rapid7.com:3780/home.jsp",
+    "path": "/home.jsp",
+    "authenticated": true,
+    "scores": {
+      "performance": 16
+    },
+    "metrics": {
+      "FCP": 35263,
+      "LCP": 37324,
+      "TBT": 1029,
+      "CLS": 0.3522,
+      "SI": 35263
+    },
+    "bundles": {
+      "totalTransferSize": 5151108,
+      "unusedJS": 1587126,
+      "unusedCSS": 290483
+    }
+  }
+]
