@@ -43,6 +43,28 @@ npm run lighthouse -- --username hijackers --password hijackers --accessCode 123
 npm run trends
 ```
 
+### Compare Two Hosts (/compare)
+
+```bash
+npm run compare
+```
+
+Then open:
+- `http://localhost:8787/` for **single host** UI run (same flow as `npm run lighthouse`)
+- `http://localhost:8787/compare` for **two-host comparison**
+
+Both pages provide live progress updates over WebSockets while audits are running.
+
+Fill the forms with:
+- Host A and Host B base URLs
+- Username/password (optional per host)
+- Access code (optional)
+- URLs/paths to measure (comma or newline separated)
+
+On submit, the page runs the same Lighthouse metrics for both hosts and shows side-by-side values for Performance, FCP, LCP, TBT, CLS, and SI.
+
+Each host run also records screenshots and generates a per-host MP4 video under `lighthouse-videos/` (video path is included in the results table).
+
 Generates `lighthouse-trends.html` with:
 - Summary cards showing latest performance scores and run counts
 - Performance score trend chart

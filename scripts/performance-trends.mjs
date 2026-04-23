@@ -1,41 +1,85 @@
 import fs from 'fs';
 import path from 'path';
 
-const METRICS_DIR = path.resolve(process.cwd(), 'lighthouse-metrics');
+const RUNS_ROOT_DIR = path.resolve(process.cwd(), 'lighthouse-runs');
 const OUTPUT_FILE = path.resolve(process.cwd(), 'lighthouse-trends.html');
 
-const metricFiles = fs.existsSync(METRICS_DIR)
-  ? fs.readdirSync(METRICS_DIR).filter((name) => name.endsWith('.json'))
-  : [];
+const getAllFilesRecursive = (dirPath) => {
+  if (!fs.existsSync(dirPath)) return [];
+  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const fullPath = path.join(dirPath, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...getAllFilesRecursive(fullPath));
+    } else {
+      files.push(fullPath);
+    }
+  }
+  return files;
+};
 
-if (metricFiles.length === 0) {
-  console.log(`No metrics JSON files found in ${METRICS_DIR}`);
-  process.exit(1);
+const metricFiles = getAllFilesRecursive(RUNS_ROOT_DIR)
+  .filter((fullPath) => fullPath.endsWith('.json') && fullPath.includes(`${path.sep}lighthouse-metrics${path.sep}`));
+
+const hasMetricFiles = metricFiles.length > 0;
+if (!hasMetricFiles) {
+  console.log(`No metrics JSON files found under ${RUNS_ROOT_DIR}; generating empty trends report.`);
 }
 
-const series = metricFiles
-  .map((fileName) => {
-    const fullPath = path.join(METRICS_DIR, fileName);
-    try {
-      const data = JSON.parse(fs.readFileSync(fullPath, 'utf-8'));
-      if (!Array.isArray(data) || data.length === 0) return null;
-      const sorted = [...data].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-      const label = sorted[0]?.path || fileName.replace(/^lighthouse-metrics-/, '').replace(/\.json$/, '');
-      const points = sorted.map((entry) => ({
+const groupedSeries = new Map();
+
+for (const fullPath of metricFiles) {
+  const fileName = path.basename(fullPath);
+  try {
+    const data = JSON.parse(fs.readFileSync(fullPath, 'utf-8'));
+    if (!Array.isArray(data) || data.length === 0) {
+      continue;
+    }
+
+    for (const entry of data) {
+      const entryPath = entry?.path || fileName.replace(/^lighthouse-metrics-/, '').replace(/\.json$/, '');
+      let host = 'unknown-host';
+      try {
+        host = new URL(entry?.url || '').host || host;
+      } catch {
+        // Keep fallback host.
+      }
+
+      const key = `${host}|${entryPath}`;
+      if (!groupedSeries.has(key)) {
+        groupedSeries.set(key, {
+          host,
+          path: entryPath,
+          label: `${entryPath} @ ${host}`,
+          fileName,
+          points: [],
+        });
+      }
+
+      groupedSeries.get(key).points.push({
         timestamp: entry.timestamp,
+        host,
+        path: entryPath,
         performance: typeof entry?.scores?.performance === 'number' ? entry.scores.performance : null,
         FCP: typeof entry?.metrics?.FCP === 'number' ? entry.metrics.FCP : null,
         LCP: typeof entry?.metrics?.LCP === 'number' ? entry.metrics.LCP : null,
         TBT: typeof entry?.metrics?.TBT === 'number' ? entry.metrics.TBT : null,
         CLS: typeof entry?.metrics?.CLS === 'number' ? entry.metrics.CLS : null,
         SI: typeof entry?.metrics?.SI === 'number' ? entry.metrics.SI : null,
-      }));
-      return { label, fileName, points };
-    } catch {
-      return null;
+      });
     }
-  })
-  .filter(Boolean);
+  } catch {
+    // Skip malformed files.
+  }
+}
+
+const series = Array.from(groupedSeries.values())
+  .map((item) => ({
+    ...item,
+    points: item.points.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)),
+  }))
+  .filter((item) => item.points.length > 0);
 
 const html = `<!doctype html>
 <html lang="en">
@@ -77,6 +121,26 @@ const html = `<!doctype html>
     .chip { background: #0b1220; border: 1px solid #334155; border-radius: 999px; padding: 8px 12px; }
     canvas { width: 100% !important; height: 420px !important; }
     .controls { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+    .section-title { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
+    .info-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1px solid #475569;
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: help;
+      user-select: none;
+    }
+    .help-text {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin: 0 0 10px;
+    }
     select {
       background: #0b1220;
       border: 1px solid #334155;
@@ -84,6 +148,26 @@ const html = `<!doctype html>
       border-radius: 8px;
       padding: 6px 10px;
     }
+    input[type="datetime-local"] {
+      background: #0b1220;
+      border: 1px solid #334155;
+      color: #e5e7eb;
+      border-radius: 8px;
+      padding: 6px 10px;
+    }
+    button {
+      background: #0b1220;
+      border: 1px solid #334155;
+      color: #e5e7eb;
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .controls label {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; margin-top: 8px; }
     th, td { border-bottom: 1px solid #334155; padding: 8px; text-align: left; }
     th { color: var(--muted); font-weight: 600; }
@@ -93,7 +177,13 @@ const html = `<!doctype html>
   <div class="container">
     <div class="card">
       <h1>Lighthouse Performance Trends</h1>
-      <p>Trend view generated from per-page metric files in lighthouse-metrics.</p>
+      <p>${hasMetricFiles ? 'Trend view generated from per-page metric files in lighthouse-metrics.' : 'No metric files found yet. Run a single-host or compare audit, then refresh trends.'}</p>
+      <div class="controls">
+        <label for="hostFilter">Host</label>
+        <select id="hostFilter">
+          <option value="all">All Hosts</option>
+        </select>
+      </div>
       <div class="summary" id="summary"></div>
     </div>
     <div class="card">
@@ -113,6 +203,16 @@ const html = `<!doctype html>
       <canvas id="vitalsChart"></canvas>
     </div>
     <div class="card">
+      <h3 class="section-title">
+        Performance Snapshot Table
+        <span
+          class="info-icon"
+          title="This table summarizes each page using only the latest two runs: Latest Score is the newest run, Previous Score is the run before it, Delta is Latest - Previous, and Samples is total runs collected for that page."
+          aria-label="About this table"
+        >i</span>
+      </h3>
+      <p class="help-text">Use this table for a quick page-by-page summary. For full historical detail, see the All Runs table below.</p>
+      <div class="table-wrap">
       <table>
         <thead>
           <tr>
@@ -125,8 +225,10 @@ const html = `<!doctype html>
         </thead>
         <tbody id="trendRows"></tbody>
       </table>
+      </div>
     </div>
     <div class="card">
+      <div class="table-wrap">
       <table>
         <thead>
           <tr>
@@ -140,43 +242,121 @@ const html = `<!doctype html>
         </thead>
         <tbody id="vitalsRows"></tbody>
       </table>
+      </div>
+    </div>
+    <div class="card">
+      <h3 class="section-title">
+        All Runs (Detailed View)
+        <span
+          class="info-icon"
+          title="Each row is one captured run. Values for FCP/LCP/TBT/SI are shown in seconds with raw milliseconds in parentheses."
+          aria-label="About all runs table"
+        >i</span>
+      </h3>
+      <p class="help-text">Complete run history across all pages, sorted by newest timestamp first.</p>
+      <div class="controls">
+        <label for="allRunsPageFilter">Page</label>
+        <select id="allRunsPageFilter">
+          <option value="all">All Pages</option>
+        </select>
+        <label for="allRunsFromFilter">From</label>
+        <input id="allRunsFromFilter" type="datetime-local" />
+        <label for="allRunsToFilter">To</label>
+        <input id="allRunsToFilter" type="datetime-local" />
+        <button id="allRunsReset">Reset</button>
+      </div>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Host</th>
+            <th>Page</th>
+            <th>Performance</th>
+            <th>FCP</th>
+            <th>LCP</th>
+            <th>TBT</th>
+            <th>CLS</th>
+            <th>SI</th>
+          </tr>
+        </thead>
+        <tbody id="allRunsRows"></tbody>
+      </table>
+      </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     const series = ${JSON.stringify(series)};
-    const allTimestamps = Array.from(new Set(series.flatMap((s) => s.points.map((p) => p.timestamp)))).sort();
-    const labels = allTimestamps.map((ts) => {
-      const d = new Date(ts);
-      return d.toLocaleString();
+    const hostFilter = document.getElementById('hostFilter');
+    const metricUnit = (metricKey) => ({ performance: '', FCP: 'ms', LCP: 'ms', TBT: 'ms', CLS: '', SI: 'ms' }[metricKey] || '');
+    const formatMetric = (metricKey, value) => {
+      if (typeof value !== 'number') return 'n/a';
+      if (metricKey === 'CLS') return value.toFixed(3);
+      if (metricKey === 'performance') return String(value);
+      return (value / 1000).toFixed(2) + 's';
+    };
+
+    const hosts = Array.from(new Set(series.map((s) => s.host))).sort();
+    hosts.forEach((host) => {
+      const opt = document.createElement('option');
+      opt.value = host;
+      opt.textContent = host;
+      hostFilter.appendChild(opt);
     });
 
+    const getFilteredSeries = () => {
+      const selectedHost = hostFilter.value;
+      if (selectedHost === 'all') {
+        return series;
+      }
+      return series.filter((s) => s.host === selectedHost);
+    };
+
+    const getTimeline = (activeSeries) => {
+      const timestamps = Array.from(new Set(activeSeries.flatMap((s) => s.points.map((p) => p.timestamp)))).sort();
+      const labels = timestamps.map((ts) => new Date(ts).toLocaleString());
+      return { timestamps, labels };
+    };
+
     const palette = ['#22c55e', '#38bdf8', '#f59e0b', '#a78bfa', '#ef4444'];
-    const makeDatasets = (metricKey) =>
-      series.map((s, idx) => {
+    const makeDatasets = (metricKey, activeSeries, timestamps) =>
+      activeSeries.map((s, idx) => {
         const pointMap = new Map(s.points.map((p) => [p.timestamp, p[metricKey]]));
         return {
           label: s.label,
-          data: allTimestamps.map((ts) => pointMap.has(ts) ? pointMap.get(ts) : null),
+          data: timestamps.map((ts) => pointMap.has(ts) ? pointMap.get(ts) : null),
           borderColor: palette[idx % palette.length],
           backgroundColor: palette[idx % palette.length],
           pointRadius: 3,
+          pointHoverRadius: 6,
+          pointHitRadius: 14,
           spanGaps: true,
           tension: 0.3,
         };
       });
 
     const chartCtx = document.getElementById('perfChart').getContext('2d');
-    new Chart(chartCtx, {
+    const perfChart = new Chart(chartCtx, {
       type: 'line',
-      data: { labels, datasets: makeDatasets('performance') },
+      data: { labels: [], datasets: [] },
       options: {
+        interaction: {
+          mode: 'nearest',
+          intersect: false,
+        },
         plugins: {
           legend: { labels: { color: '#e5e7eb' } },
           tooltip: {
             callbacks: {
-              label: (ctx) => String(ctx.dataset.label) + ': ' + (ctx.raw ?? 'n/a'),
+              title: (items) => {
+                return items?.[0]?.label || '';
+              },
+              label: (ctx) => {
+                const value = formatMetric('performance', ctx.raw);
+                return String(ctx.dataset.label) + ': ' + value;
+              },
             },
           },
         },
@@ -202,13 +382,28 @@ const html = `<!doctype html>
 
     const vitalsChart = new Chart(vitalsCtx, {
       type: 'line',
-      data: { labels, datasets: makeDatasets('FCP') },
+      data: { labels: [], datasets: [] },
       options: {
+        interaction: {
+          mode: 'nearest',
+          intersect: false,
+        },
         plugins: {
           legend: { labels: { color: '#e5e7eb' } },
           tooltip: {
             callbacks: {
-              label: (ctx) => String(ctx.dataset.label) + ': ' + (ctx.raw ?? 'n/a'),
+              title: (items) => {
+                return items?.[0]?.label || '';
+              },
+              label: (ctx) => {
+                const selectedMetric = vitalMetricSelector.value;
+                const value = formatMetric(selectedMetric, ctx.raw);
+                const unit = metricUnit(selectedMetric);
+                if (unit === 'ms') {
+                  return String(ctx.dataset.label) + ': ' + value + ' (' + Math.round(ctx.raw) + 'ms)';
+                }
+                return String(ctx.dataset.label) + ': ' + value;
+              },
             },
           },
         },
@@ -236,6 +431,11 @@ const html = `<!doctype html>
     const rows = document.getElementById('trendRows');
     const summary = document.getElementById('summary');
     const vitalsRows = document.getElementById('vitalsRows');
+    const allRunsRows = document.getElementById('allRunsRows');
+    const allRunsPageFilter = document.getElementById('allRunsPageFilter');
+    const allRunsFromFilter = document.getElementById('allRunsFromFilter');
+    const allRunsToFilter = document.getElementById('allRunsToFilter');
+    const allRunsReset = document.getElementById('allRunsReset');
 
     const formatMs = (val) => {
       if (typeof val !== 'number') return 'n/a';
@@ -243,37 +443,138 @@ const html = `<!doctype html>
     };
     const formatCLS = (val) => (typeof val === 'number' ? val.toFixed(3) : 'n/a');
 
-    series.forEach((s) => {
-      const numeric = s.points.filter((p) => typeof p.performance === 'number');
-      const latest = numeric.at(-1)?.performance;
-      const prev = numeric.at(-2)?.performance;
-      const delta = (typeof latest === 'number' && typeof prev === 'number') ? latest - prev : null;
+    const getAllRuns = (activeSeries) => activeSeries
+      .flatMap((s) => s.points.map((p) => ({ host: s.host, page: s.path, label: s.label, ...p })))
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-      const tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td>' + s.label + '</td>' +
-        '<td>' + (latest ?? 'n/a') + '</td>' +
-        '<td>' + (prev ?? 'n/a') + '</td>' +
-        '<td>' + (delta === null ? 'n/a' : (delta > 0 ? '+' + delta : String(delta))) + '</td>' +
-        '<td>' + numeric.length + '</td>';
-      rows.appendChild(tr);
+    const fmtMsWithRaw = (val) => {
+      if (typeof val !== 'number') return 'n/a';
+      return (val / 1000).toFixed(2) + 's (' + Math.round(val) + 'ms)';
+    };
 
-      const chip = document.createElement('div');
-      chip.className = 'chip';
-      chip.textContent = s.label + ': ' + (latest ?? 'n/a') + ' (' + numeric.length + ' runs)';
-      summary.appendChild(chip);
+    const renderAllRuns = (allRuns) => {
+      const selectedPage = allRunsPageFilter.value;
+      const fromTs = allRunsFromFilter.value ? new Date(allRunsFromFilter.value).getTime() : null;
+      const toTs = allRunsToFilter.value ? new Date(allRunsToFilter.value).getTime() : null;
 
-      const latestPoint = s.points.at(-1) || {};
-      const vitalsTr = document.createElement('tr');
-      vitalsTr.innerHTML =
-        '<td>' + s.label + '</td>' +
-        '<td>' + formatMs(latestPoint.FCP) + '</td>' +
-        '<td>' + formatMs(latestPoint.LCP) + '</td>' +
-        '<td>' + formatMs(latestPoint.TBT) + '</td>' +
-        '<td>' + formatCLS(latestPoint.CLS) + '</td>' +
-        '<td>' + formatMs(latestPoint.SI) + '</td>';
-      vitalsRows.appendChild(vitalsTr);
+      const filteredRuns = allRuns.filter((run) => {
+        const runTs = new Date(run.timestamp).getTime();
+        const pageMatch = selectedPage === 'all' || run.page === selectedPage;
+        const fromMatch = fromTs === null || runTs >= fromTs;
+        const toMatch = toTs === null || runTs <= toTs;
+        return pageMatch && fromMatch && toMatch;
+      });
+
+      allRunsRows.innerHTML = '';
+
+      filteredRuns.forEach((run) => {
+        const runTr = document.createElement('tr');
+        runTr.innerHTML =
+          '<td>' + new Date(run.timestamp).toLocaleString() + '</td>' +
+          '<td>' + run.host + '</td>' +
+          '<td>' + run.page + '</td>' +
+          '<td>' + (typeof run.performance === 'number' ? run.performance : 'n/a') + '</td>' +
+          '<td>' + fmtMsWithRaw(run.FCP) + '</td>' +
+          '<td>' + fmtMsWithRaw(run.LCP) + '</td>' +
+          '<td>' + fmtMsWithRaw(run.TBT) + '</td>' +
+          '<td>' + formatCLS(run.CLS) + '</td>' +
+          '<td>' + fmtMsWithRaw(run.SI) + '</td>';
+        allRunsRows.appendChild(runTr);
+      });
+
+      if (filteredRuns.length === 0) {
+        const emptyTr = document.createElement('tr');
+        emptyTr.innerHTML = '<td colspan="9">No runs match the selected filters.</td>';
+        allRunsRows.appendChild(emptyTr);
+      }
+    };
+
+    const updatePageFilterOptions = (allRuns) => {
+      const currentValue = allRunsPageFilter.value;
+      const pageOptions = Array.from(new Set(allRuns.map((run) => run.page))).sort();
+      allRunsPageFilter.innerHTML = '<option value="all">All Pages</option>';
+      pageOptions.forEach((page) => {
+        const opt = document.createElement('option');
+        opt.value = page;
+        opt.textContent = page;
+        allRunsPageFilter.appendChild(opt);
+      });
+      if (currentValue && (currentValue === 'all' || pageOptions.includes(currentValue))) {
+        allRunsPageFilter.value = currentValue;
+      }
+    };
+
+    const renderDashboard = () => {
+      const activeSeries = getFilteredSeries();
+      const { timestamps, labels } = getTimeline(activeSeries);
+
+      perfChart.data.labels = labels;
+      perfChart.data.datasets = makeDatasets('performance', activeSeries, timestamps);
+      perfChart.update();
+
+      const selectedMetric = vitalMetricSelector.value;
+      vitalsChart.data.labels = labels;
+      vitalsChart.data.datasets = makeDatasets(selectedMetric, activeSeries, timestamps);
+      vitalsChart.options.scales.y.title.text = vitalMetricLabel(selectedMetric);
+      vitalsChart.update();
+
+      rows.innerHTML = '';
+      summary.innerHTML = '';
+      vitalsRows.innerHTML = '';
+
+      activeSeries.forEach((s) => {
+        const numeric = s.points.filter((p) => typeof p.performance === 'number');
+        const latest = numeric.at(-1)?.performance;
+        const prev = numeric.at(-2)?.performance;
+        const delta = (typeof latest === 'number' && typeof prev === 'number') ? latest - prev : null;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + s.label + '</td>' +
+          '<td>' + (latest ?? 'n/a') + '</td>' +
+          '<td>' + (prev ?? 'n/a') + '</td>' +
+          '<td>' + (delta === null ? 'n/a' : (delta > 0 ? '+' + delta : String(delta))) + '</td>' +
+          '<td>' + numeric.length + '</td>';
+        rows.appendChild(tr);
+
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        chip.textContent = s.label + ': ' + (latest ?? 'n/a') + ' (' + numeric.length + ' runs)';
+        summary.appendChild(chip);
+
+        const latestPoint = s.points.at(-1) || {};
+        const vitalsTr = document.createElement('tr');
+        vitalsTr.innerHTML =
+          '<td>' + s.label + '</td>' +
+          '<td>' + formatMs(latestPoint.FCP) + '</td>' +
+          '<td>' + formatMs(latestPoint.LCP) + '</td>' +
+          '<td>' + formatMs(latestPoint.TBT) + '</td>' +
+          '<td>' + formatCLS(latestPoint.CLS) + '</td>' +
+          '<td>' + formatMs(latestPoint.SI) + '</td>';
+        vitalsRows.appendChild(vitalsTr);
+      });
+
+      const allRuns = getAllRuns(activeSeries);
+      updatePageFilterOptions(allRuns);
+      renderAllRuns(allRuns);
+    };
+
+    allRunsPageFilter.addEventListener('change', renderDashboard);
+    allRunsFromFilter.addEventListener('change', renderDashboard);
+    allRunsToFilter.addEventListener('change', renderDashboard);
+    allRunsReset.addEventListener('click', () => {
+      allRunsPageFilter.value = 'all';
+      allRunsFromFilter.value = '';
+      allRunsToFilter.value = '';
+      renderDashboard();
     });
+
+    hostFilter.addEventListener('change', () => {
+      allRunsPageFilter.value = 'all';
+      renderDashboard();
+    });
+
+    renderDashboard();
   </script>
 </body>
 </html>`;

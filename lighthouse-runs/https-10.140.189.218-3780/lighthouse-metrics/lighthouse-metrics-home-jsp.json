@@ -1,0 +1,24 @@
+[
+  {
+    "timestamp": "2026-04-23T16:29:10.554Z",
+    "url": "https://10.140.189.218:3780/home.jsp",
+    "path": "/home.jsp",
+    "measurementProfile": "lighthouse",
+    "authenticated": true,
+    "scores": {
+      "performance": 55
+    },
+    "metrics": {
+      "FCP": 35722,
+      "LCP": 39270,
+      "TBT": 0,
+      "CLS": 0.035,
+      "SI": 35722
+    },
+    "bundles": {
+      "totalTransferSize": 4214681,
+      "unusedJS": 2949271,
+      "unusedCSS": 1765181
+    }
+  }
+]

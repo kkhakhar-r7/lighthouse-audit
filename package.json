@@ -8,14 +8,18 @@
     "node": ">=18.0.0"
   },
   "scripts": {
+    "start": "node scripts/compare-server.mjs",
+    "start:dev": "PORT=8787 node scripts/compare-server.mjs",
     "audit": "node scripts/lighthouse-audit.mjs",
     "lighthouse": "node scripts/lighthouse-audit.mjs",
-    "trends": "node scripts/performance-trends.mjs"
+    "trends": "node scripts/performance-trends.mjs",
+    "compare": "node scripts/compare-server.mjs"
   },
   "dependencies": {
     "chrome-launcher": "^1.1.0",
     "ffmpeg-static": "^5.2.0",
     "lighthouse": "^12.0.0",
-    "puppeteer-core": "^22.0.0"
+    "puppeteer-core": "^22.0.0",
+    "ws": "^8.18.0"
   }
 }

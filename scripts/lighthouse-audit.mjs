@@ -11,6 +11,7 @@ const {
   username,
   password,
   accessCode,
+  measurementProfile,
   resultsFile,
   metricsDir,
   screenshotRootDir,
@@ -29,6 +30,7 @@ ensureDir(metricsDir);
 
 console.log(`Running Lighthouse audits against origin: ${new globalThis.URL(baseUrl).origin}`);
 console.log(`Audit paths: ${AUDIT_PATHS.join(', ')}`);
+console.log(`Measurement profile: ${measurementProfile}`);
 if (username) console.log(`Authenticating as: ${username}`);
 if (accessCode) console.log('Using access code for login flow.');
 console.log(`Run ID: ${runId}`);
@@ -65,6 +67,7 @@ try {
     baseUrl,
     auditPaths: AUDIT_PATHS,
     cookies,
+    measurementProfile,
     metricsDir,
     resultsFile,
   });
