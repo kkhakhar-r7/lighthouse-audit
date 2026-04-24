@@ -29,6 +29,12 @@ npm install    # Install dependencies
 
 ### Run Lighthouse Audits
 
+### Run application
+
+```bash
+npm start
+```
+
 ```bash
 # Authenticate and audit both pages
 npm run lighthouse -- --username hijackers --password hijackers
