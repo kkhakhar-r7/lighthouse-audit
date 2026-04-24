@@ -20,5 +20,27 @@
       "unusedJS": 3020273,
       "unusedCSS": 1707621
     }
+  },
+  {
+    "timestamp": "2026-04-24T05:13:55.248Z",
+    "url": "https://odin.vuln.lax.rapid7.com:3780/home.jsp",
+    "path": "/home.jsp",
+    "measurementProfile": "lighthouse",
+    "authenticated": true,
+    "scores": {
+      "performance": 54
+    },
+    "metrics": {
+      "FCP": 25470,
+      "LCP": 26533,
+      "TBT": 0,
+      "CLS": 0.0817,
+      "SI": 25470
+    },
+    "bundles": {
+      "totalTransferSize": 4387131,
+      "unusedJS": 3020273,
+      "unusedCSS": 1707621
+    }
   }
 ]

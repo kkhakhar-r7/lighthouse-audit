@@ -1,0 +1,24 @@
+[
+  {
+    "timestamp": "2026-04-24T05:14:20.123Z",
+    "url": "https://odin.vuln.lax.rapid7.com:3780/asset/index.jsp",
+    "path": "/asset/index.jsp",
+    "measurementProfile": "lighthouse",
+    "authenticated": true,
+    "scores": {
+      "performance": 55
+    },
+    "metrics": {
+      "FCP": 22365,
+      "LCP": 22819,
+      "TBT": 0,
+      "CLS": 0.0459,
+      "SI": 22365
+    },
+    "bundles": {
+      "totalTransferSize": 4200586,
+      "unusedJS": 3008106,
+      "unusedCSS": 1707621
+    }
+  }
+]

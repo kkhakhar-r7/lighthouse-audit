@@ -20,5 +20,49 @@
       "unusedJS": 2949271,
       "unusedCSS": 1765181
     }
+  },
+  {
+    "timestamp": "2026-04-23T17:26:56.640Z",
+    "url": "https://10.140.189.218:3780/home.jsp",
+    "path": "/home.jsp",
+    "measurementProfile": "lighthouse",
+    "authenticated": true,
+    "scores": {
+      "performance": 54
+    },
+    "metrics": {
+      "FCP": 27733,
+      "LCP": 28808,
+      "TBT": 0,
+      "CLS": 0.0807,
+      "SI": 27733
+    },
+    "bundles": {
+      "totalTransferSize": 4302216,
+      "unusedJS": 2935542,
+      "unusedCSS": 1765181
+    }
+  },
+  {
+    "timestamp": "2026-04-24T05:06:17.450Z",
+    "url": "https://10.140.189.218:3780/home.jsp",
+    "path": "/home.jsp",
+    "measurementProfile": "lighthouse",
+    "authenticated": true,
+    "scores": {
+      "performance": 54
+    },
+    "metrics": {
+      "FCP": 27709,
+      "LCP": 28921,
+      "TBT": 0,
+      "CLS": 0.0711,
+      "SI": 27709
+    },
+    "bundles": {
+      "totalTransferSize": 4374631,
+      "unusedJS": 2886855,
+      "unusedCSS": 175015
+    }
   }
 ]
