@@ -42,5 +42,27 @@
       "unusedJS": 2882984,
       "unusedCSS": 1425206
     }
+  },
+  {
+    "timestamp": "2026-04-24T05:48:27.913Z",
+    "url": "https://10.140.189.218:3780/asset/index.jsp",
+    "path": "/asset/index.jsp",
+    "measurementProfile": "browser",
+    "authenticated": true,
+    "scores": {
+      "performance": 71
+    },
+    "metrics": {
+      "FCP": 2203,
+      "LCP": 2553,
+      "TBT": 217,
+      "CLS": 0.0001,
+      "SI": 712
+    },
+    "bundles": {
+      "totalTransferSize": 5017805,
+      "unusedJS": 2882399,
+      "unusedCSS": 1425661
+    }
   }
 ]

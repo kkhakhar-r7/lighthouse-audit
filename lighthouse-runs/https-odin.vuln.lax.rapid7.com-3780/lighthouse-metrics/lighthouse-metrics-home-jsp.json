@@ -42,5 +42,93 @@
       "unusedJS": 3020273,
       "unusedCSS": 1707621
     }
+  },
+  {
+    "timestamp": "2026-04-24T05:39:39.888Z",
+    "url": "https://odin.vuln.lax.rapid7.com:3780/home.jsp",
+    "path": "/home.jsp",
+    "measurementProfile": "browser",
+    "authenticated": false,
+    "scores": {
+      "performance": 55
+    },
+    "metrics": {
+      "FCP": 3094,
+      "LCP": 4344,
+      "TBT": 181,
+      "CLS": 0,
+      "SI": 3758
+    },
+    "bundles": {
+      "totalTransferSize": 3556784,
+      "unusedJS": 1470679,
+      "unusedCSS": 286654
+    }
+  },
+  {
+    "timestamp": "2026-04-24T05:42:26.141Z",
+    "url": "https://odin.vuln.lax.rapid7.com:3780/home.jsp",
+    "path": "/home.jsp",
+    "measurementProfile": "browser",
+    "authenticated": true,
+    "scores": {
+      "performance": 53
+    },
+    "metrics": {
+      "FCP": 2224,
+      "LCP": 2616,
+      "TBT": 252,
+      "CLS": 0.261,
+      "SI": 1487
+    },
+    "bundles": {
+      "totalTransferSize": 4303505,
+      "unusedJS": 3020273,
+      "unusedCSS": 1708093
+    }
+  },
+  {
+    "timestamp": "2026-04-24T11:20:26.876Z",
+    "url": "https://odin.vuln.lax.rapid7.com:3780/home.jsp",
+    "path": "/home.jsp",
+    "measurementProfile": "lighthouse",
+    "authenticated": true,
+    "scores": {
+      "performance": 54
+    },
+    "metrics": {
+      "FCP": 25466,
+      "LCP": 26529,
+      "TBT": 0,
+      "CLS": 0.0762,
+      "SI": 25466
+    },
+    "bundles": {
+      "totalTransferSize": 4387130,
+      "unusedJS": 3020273,
+      "unusedCSS": 1707621
+    }
+  },
+  {
+    "timestamp": "2026-04-24T13:03:39.983Z",
+    "url": "https://odin.vuln.lax.rapid7.com:3780/home.jsp",
+    "path": "/home.jsp",
+    "measurementProfile": "lighthouse",
+    "authenticated": true,
+    "scores": {
+      "performance": 54
+    },
+    "metrics": {
+      "FCP": 28259,
+      "LCP": 29182,
+      "TBT": 0,
+      "CLS": 0.0818,
+      "SI": 28259
+    },
+    "bundles": {
+      "totalTransferSize": 4387647,
+      "unusedJS": 3020273,
+      "unusedCSS": 1707621
+    }
   }
 ]

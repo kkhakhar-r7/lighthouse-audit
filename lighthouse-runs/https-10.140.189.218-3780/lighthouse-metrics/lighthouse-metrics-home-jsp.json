@@ -64,5 +64,71 @@
       "unusedJS": 2886855,
       "unusedCSS": 175015
     }
+  },
+  {
+    "timestamp": "2026-04-24T05:47:56.982Z",
+    "url": "https://10.140.189.218:3780/home.jsp",
+    "path": "/home.jsp",
+    "measurementProfile": "browser",
+    "authenticated": true,
+    "scores": {
+      "performance": 56
+    },
+    "metrics": {
+      "FCP": 1915,
+      "LCP": 2398,
+      "TBT": 344,
+      "CLS": 0.1871,
+      "SI": 1294
+    },
+    "bundles": {
+      "totalTransferSize": 4186246,
+      "unusedJS": 2886855,
+      "unusedCSS": 1425661
+    }
+  },
+  {
+    "timestamp": "2026-04-24T11:23:04.379Z",
+    "url": "https://10.140.189.218:3780/home.jsp",
+    "path": "/home.jsp",
+    "measurementProfile": "lighthouse",
+    "authenticated": true,
+    "scores": {
+      "performance": 25
+    },
+    "metrics": {
+      "FCP": 22641,
+      "LCP": 29653,
+      "TBT": 2138,
+      "CLS": 0.0868,
+      "SI": 22641
+    },
+    "bundles": {
+      "totalTransferSize": 6376448,
+      "unusedJS": 2934019,
+      "unusedCSS": 1384657
+    }
+  },
+  {
+    "timestamp": "2026-04-24T12:59:37.788Z",
+    "url": "https://10.140.189.218:3780/home.jsp",
+    "path": "/home.jsp",
+    "measurementProfile": "lighthouse",
+    "authenticated": true,
+    "scores": {
+      "performance": 25
+    },
+    "metrics": {
+      "FCP": 22968,
+      "LCP": 30095,
+      "TBT": 2098,
+      "CLS": 0.0908,
+      "SI": 22968
+    },
+    "bundles": {
+      "totalTransferSize": 6378500,
+      "unusedJS": 2933441,
+      "unusedCSS": 1384657
+    }
   }
 ]

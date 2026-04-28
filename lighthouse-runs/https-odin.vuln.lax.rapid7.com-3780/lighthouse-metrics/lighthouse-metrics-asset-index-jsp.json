@@ -20,5 +20,49 @@
       "unusedJS": 3008106,
       "unusedCSS": 1707621
     }
+  },
+  {
+    "timestamp": "2026-04-24T05:40:02.756Z",
+    "url": "https://odin.vuln.lax.rapid7.com:3780/asset/index.jsp",
+    "path": "/asset/index.jsp",
+    "measurementProfile": "browser",
+    "authenticated": false,
+    "scores": {
+      "performance": 66
+    },
+    "metrics": {
+      "FCP": 2436,
+      "LCP": 2719,
+      "TBT": 170,
+      "CLS": 0,
+      "SI": 2582
+    },
+    "bundles": {
+      "totalTransferSize": 3556784,
+      "unusedJS": 1470686,
+      "unusedCSS": 286654
+    }
+  },
+  {
+    "timestamp": "2026-04-24T05:42:57.979Z",
+    "url": "https://odin.vuln.lax.rapid7.com:3780/asset/index.jsp",
+    "path": "/asset/index.jsp",
+    "measurementProfile": "browser",
+    "authenticated": true,
+    "scores": {
+      "performance": 69
+    },
+    "metrics": {
+      "FCP": 2207,
+      "LCP": 2574,
+      "TBT": 228,
+      "CLS": 0.0675,
+      "SI": 704
+    },
+    "bundles": {
+      "totalTransferSize": 4718410,
+      "unusedJS": 3008106,
+      "unusedCSS": 1708093
+    }
   }
 ]
